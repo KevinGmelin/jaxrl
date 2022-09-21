@@ -93,9 +93,9 @@ def main(_):
         )
         wandb.config.update({"algo": algo})
 
-    def make_pixel_env(ml1, seed, video_folder):
+    def make_pixel_env(mt1, seed, video_folder):
         return make_metaworld_env(
-            ml1,
+            mt1,
             FLAGS.env_name,
             seed,
             video_folder,
@@ -106,9 +106,9 @@ def main(_):
             gray_scale=gray_scale,
         )
 
-    ml1 = metaworld.ML1(FLAGS.env_name)
-    env = make_pixel_env(ml1, FLAGS.seed, video_train_folder)
-    eval_env = make_pixel_env(ml1, FLAGS.seed + 42, video_eval_folder)
+    mt1 = metaworld.MT1(FLAGS.env_name)
+    env = make_pixel_env(mt1, FLAGS.seed, video_train_folder)
+    eval_env = make_pixel_env(mt1, FLAGS.seed + 42, video_eval_folder)
 
     np.random.seed(FLAGS.seed)
     random.seed(FLAGS.seed)
@@ -129,7 +129,7 @@ def main(_):
     )
 
     eval_returns = []
-    task = random.choice(ml1.train_tasks)
+    task = random.choice(mt1.train_tasks)
     env.set_task(task)
     observation, done = env.reset(), False
     for i in tqdm.tqdm(
@@ -154,14 +154,14 @@ def main(_):
         observation = next_observation
 
         if done:
-            task = random.choice(ml1.train_tasks)
+            task = random.choice(mt1.train_tasks)
             env.set_task(task)
             observation, done = env.reset(), False
             for k, v in info["episode"].items():
-                print(f"training/{k}", v, info["total"]["timesteps"])
                 summary_writer.add_scalar(
                     f"training/{k}", v, info["total"]["timesteps"]
                 )
+            summary_writer.flush()
 
         if i >= FLAGS.start_training:
             batch = replay_buffer.sample(FLAGS.batch_size)
@@ -173,7 +173,7 @@ def main(_):
                 summary_writer.flush()
 
         if i % FLAGS.eval_interval == 0:
-            eval_stats = evaluate_metaworld(agent, eval_env, ml1, FLAGS.eval_episodes)
+            eval_stats = evaluate_metaworld(agent, eval_env, mt1, FLAGS.eval_episodes)
 
             for k, v in eval_stats.items():
                 summary_writer.add_scalar(

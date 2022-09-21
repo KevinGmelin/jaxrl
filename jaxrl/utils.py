@@ -78,7 +78,7 @@ def make_env(env_name: str,
 
     return env
 
-def make_metaworld_env(ml1,
+def make_metaworld_env(mt1,
                        env_name: str,
                        seed: int,
                        save_folder: Optional[str] = None,
@@ -93,7 +93,7 @@ def make_metaworld_env(ml1,
                        flatten: bool = True) -> gym.Env:
     
 
-    env = ml1.train_classes[env_name]()
+    env = mt1.train_classes[env_name]()
 
     env.metadata = {"render.modes": ["rgb_array"]}
 
