@@ -2,6 +2,13 @@ import os
 import random
 import time
 
+import logging
+logger = logging.getLogger()
+class CheckTypesFilter(logging.Filter):
+    def filter(self, record):
+        return "check_types" not in record.getMessage()
+logger.addFilter(CheckTypesFilter())
+
 import numpy as np
 import tqdm
 from absl import app, flags
