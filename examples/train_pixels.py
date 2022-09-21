@@ -1,5 +1,13 @@
 import os
 import random
+import time
+
+import logging
+logger = logging.getLogger()
+class CheckTypesFilter(logging.Filter):
+    def filter(self, record):
+        return "check_types" not in record.getMessage()
+logger.addFilter(CheckTypesFilter())
 
 import numpy as np
 import tqdm
@@ -66,14 +74,30 @@ def main(_):
     gray_scale = kwargs.pop('gray_scale')
     image_size = kwargs.pop('image_size')
 
+    algo = kwargs.pop('algo')
+    run_name = f"{FLAGS.env_name}__{algo}__{FLAGS.seed}__{int(time.time())}"
+    if FLAGS.track:
+        import wandb
+
+        wandb.init(
+            project=FLAGS.wandb_project_name,
+            entity=FLAGS.wandb_entity,
+            sync_tensorboard=True,
+            config=FLAGS,
+            name=run_name,
+            monitor_gym=True,
+            save_code=True,
+        )
+        wandb.config.update({"algo": algo})
+
     def make_pixel_env(seed, video_folder):
         return make_env(FLAGS.env_name,
-                        seed,
-                        video_folder,
-                        action_repeat=action_repeat,
-                        image_size=image_size,
-                        frame_stack=3,
-                        from_pixels=True,
+            seed,
+            video_folder,
+            action_repeat=action_repeat,
+            image_size=image_size,
+            frame_stack=3,
+            from_pixels=True,
                         gray_scale=gray_scale)
 
     env = make_pixel_env(FLAGS.seed, video_train_folder)
@@ -85,7 +109,7 @@ def main(_):
     kwargs.pop('algo')
     replay_buffer_size = kwargs.pop('replay_buffer_size')
     agent = DrQLearner(FLAGS.seed,
-                       env.observation_space.sample()[np.newaxis],
+        env.observation_space.sample()[np.newaxis],
                        env.action_space.sample()[np.newaxis], **kwargs)
 
     replay_buffer = ReplayBuffer(
@@ -95,7 +119,7 @@ def main(_):
     eval_returns = []
     observation, done = env.reset(), False
     for i in tqdm.tqdm(range(1, FLAGS.max_steps // action_repeat + 1),
-                       smoothing=0.1,
+        smoothing=0.1,
                        disable=not FLAGS.tqdm):
         if i < FLAGS.start_training:
             action = env.action_space.sample()
@@ -138,7 +162,7 @@ def main(_):
             eval_returns.append(
                 (info['total']['timesteps'], eval_stats['return']))
             np.savetxt(os.path.join(FLAGS.save_dir, f'{FLAGS.seed}.txt'),
-                       eval_returns,
+                eval_returns,
                        fmt=['%d', '%.1f'])
 
 
