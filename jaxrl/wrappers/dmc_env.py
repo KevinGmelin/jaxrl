@@ -61,6 +61,10 @@ class DMCEnv(core.Env):
 
         self.seed(seed=task_kwargs['random'])
 
+        self.metadata = {
+            "render.modes": ["rgb_array"]
+        }
+
     def __getattr__(self, name):
         return getattr(self._env, name)
 
